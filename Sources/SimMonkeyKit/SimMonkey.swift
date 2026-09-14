@@ -23,15 +23,26 @@ public enum SimMonkey {
 
     /// Printed in the attach line. When a copy of this package drifts behind
     /// the panel, this is how you find out — see CHANGELOG.md.
-    public static let version = "1.0.0"
+    public static let version = "1.1.0"
+
+    /// What the panel shows this app as. Several apps can talk to one panel,
+    /// and a row needs to say which one it came from. Resolved in `start()`:
+    /// the name you pass, else the bundle's display name, else its name, else
+    /// the process name — so it is never empty.
+    public private(set) static var appName = ""
     
     private static var started = false
     
     /// Installs the interceptor. Safe to call more than once.
-    public static func start(port: UInt16 = 8377) {
+    ///
+    /// - Parameter appName: shown in the panel's traffic list. Defaults to the
+    ///   app's display name, which is right for nearly everyone; pass one when
+    ///   two targets share a display name (a white-label build, say).
+    public static func start(port: UInt16 = 8377, appName: String? = nil) {
         guard !started else { return }
         started = true
         Self.port = port
+        Self.appName = resolveAppName(appName)
         
         // Built BEFORE the swizzle, so its configuration snapshot can never
         // contain our protocol. Forwarded requests cannot re-enter.
@@ -40,7 +51,17 @@ public enum SimMonkey {
         swizzleProtocolClasses()
         URLProtocol.registerClass(SimMonkeyURLProtocol.self)
         
-        NSLog("[simmonkey] \(version) attached — panel at 127.0.0.1:\(port)")
+        NSLog("[simmonkey] \(version) attached as “\(appName)” — panel at 127.0.0.1:\(port)")
+    }
+
+    private static func resolveAppName(_ explicit: String?) -> String {
+        let trimmed = explicit?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmed.isEmpty { return trimmed }
+        let info = Bundle.main.infoDictionary ?? [:]
+        for key in ["CFBundleDisplayName", "CFBundleName"] {
+            if let name = info[key] as? String, !name.isEmpty { return name }
+        }
+        return ProcessInfo.processInfo.processName
     }
     
     /// `URLProtocol.registerClass` alone does nothing for URLSession: a session
@@ -139,7 +160,8 @@ final class SimMonkeyURLProtocol: URLProtocol {
             "method": request.httpMethod ?? "GET",
             "url": request.url?.absoluteString ?? "",
             "headers": Self.reportableHeaders(request),
-            "body": body?.base64EncodedString() ?? ""
+            "body": body?.base64EncodedString() ?? "",
+            "app": SimMonkey.appName
         ]
         
         var plan: [String: Any]?

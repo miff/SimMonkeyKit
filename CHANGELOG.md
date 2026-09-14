@@ -6,13 +6,23 @@ entries note when a client change needs a matching panel.
 The version prints in the attach line on launch:
 
 ```
-[simmonkey] 1.0.0 attached — panel at 127.0.0.1:8377
+[simmonkey] 1.1.0 attached as “MyApp” — panel at 127.0.0.1:8377
 ```
 
 **If your attach line has no version number, you're on a pre-1.0 draft** — one
 of the copied-source builds from before the package was versioned. Everything
 under *Fixed* below is missing from it. Replace the copy with a package
 reference and the problem goes away for good.
+
+## 1.1.0 — 2026-09-14
+
+### Added
+
+- **App name on every request.** `/resolve` now carries `app`, so a panel
+  shared by several projects can say which one each row came from. Defaults
+  to the bundle's display name; `start(appName:)` overrides it. The attach
+  line prints the name in use. *(Panel 1.1.0 shows it; older panels ignore
+  the field.)*
 
 ## 1.0.0 — 2026-09-11
 

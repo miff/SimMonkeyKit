@@ -68,7 +68,7 @@ struct MyApp: App {
 That's the whole integration. On launch you'll see this in the console before your own logs:
 
 ```
-[simmonkey] 1.0.0 attached — panel at 127.0.0.1:8377
+[simmonkey] 1.1.0 attached as “MyApp” — panel at 127.0.0.1:8377
 ```
 
 The version is there on purpose. If yours has no version number, you're on a pre-1.0 copy — see [CHANGELOG.md](CHANGELOG.md) for everything it's missing.
@@ -77,6 +77,15 @@ If the panel listens somewhere else:
 
 ```swift
 SimMonkey.start(port: 8400)
+```
+
+Each row in the panel is labelled with the app it came from — useful when a
+few projects share one panel. The label is your app's display name; pass one
+only when that isn't distinctive enough, such as two targets built from the
+same base:
+
+```swift
+SimMonkey.start(appName: "Bank · Corporate")
 ```
 
 **Keep the `#if DEBUG`.** The package swizzles `URLSessionConfiguration` for the whole process; it has no business in a release build, and the guard is what keeps it out.
